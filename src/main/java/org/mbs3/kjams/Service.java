@@ -36,7 +36,7 @@ public class Service {
 		}
 		
 		URL ep = service_endpoints.get(Constants.url_ping);
-		if(!HttpUtil.doPing(ep)) {
+		if(!HttpUtil.getInstance().doPing(ep)) {
 			throw new IllegalArgumentException("Invalid url " + ep.toString());	
 		}
 		
@@ -46,7 +46,7 @@ public class Service {
 		ArrayList<Singer> singers = new ArrayList<Singer>();
 		
 		URL singurl = service_endpoints.get(Constants.url_singers);
-		NSDictionary data = (NSDictionary)HttpUtil.doPost(singurl, null);
+		NSDictionary data = (NSDictionary)HttpUtil.getInstance().doPost(singurl, null);
 		NSArray playlists = (NSArray)data.get("Playlists");
 		for(NSObject i : playlists.getArray()) {
 			
@@ -106,7 +106,7 @@ public class Service {
         		});
         
         
-        HttpUtil.doPost(newsingurl, data);
+        HttpUtil.getInstance().doPost(newsingurl, data);
 		
 		List<Singer> singers = getSingers();
 		for(Singer s : singers) {
@@ -122,7 +122,7 @@ public class Service {
 		
 		URL newsingurl = service_endpoints.get(Constants.url_search);
 		List<NameValuePair> data = Arrays.asList(new NameValuePair[]{new NameValuePair("search", term)});
-        NSObject response = HttpUtil.doPost(newsingurl, data);
+        NSObject response = HttpUtil.getInstance().doPost(newsingurl, data);
         
         NSDictionary dictPlaylists = (NSDictionary)response;
         NSArray arrPlaylists = (NSArray)dictPlaylists.get("Playlists");
@@ -160,7 +160,7 @@ public class Service {
         		});
         
         
-        HttpUtil.doPost(dropurl, data, false);
+        HttpUtil.getInstance().doPost(dropurl, data, false);
 	}
 
 	public void removeFromPlayList(Playlist playlist, int position) throws Exception {
@@ -171,7 +171,7 @@ public class Service {
         		new NameValuePair("piIx",  position+""),
         		});
         
-        HttpUtil.doPost(dropurl, data, false);
+        HttpUtil.getInstance().doPost(dropurl, data, false);
 	}
 	
 	// TODO: reorderPlaylist
@@ -189,7 +189,7 @@ public class Service {
 		
 		URL newsingurl = service_endpoints.get(Constants.url_playlists);
         
-        NSObject response = HttpUtil.doPost(newsingurl, null);
+        NSObject response = HttpUtil.getInstance().doPost(newsingurl, null);
         
         NSDictionary dictPlaylists = (NSDictionary)response;
         NSArray arrPlaylists = (NSArray)dictPlaylists.get("Playlists");
@@ -234,7 +234,7 @@ public class Service {
         
 
         //System.out.println(Util.dumpCookies((InternalHttpClient) httpClient));
-		HttpUtil.doPost(newsingurl, data);
+		HttpUtil.getInstance().doPost(newsingurl, data);
 		//System.out.println(Util.dumpCookies((InternalHttpClient) httpClient));
 	}
 }

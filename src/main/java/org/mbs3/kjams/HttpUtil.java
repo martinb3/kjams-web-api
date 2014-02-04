@@ -7,6 +7,8 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
+import java.net.CookiePolicy;
+import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -20,7 +22,7 @@ import com.dd.plist.PropertyListParser;
 public class HttpUtil {
 	private static Object _lock = new Object();
 	private static HttpUtil _ref;
-	private static HttpUtil getInstance() {
+	public static HttpUtil getInstance() {
 		synchronized(_lock) {
 			if(_ref == null) {
 				_ref = new HttpUtil();
@@ -29,12 +31,13 @@ public class HttpUtil {
 		return _ref;
 	}
 	
+	private final CookieManager cookieManager;
 	private HttpUtil() {
-		CookieManager cookieManager = new CookieManager();
+		cookieManager = new CookieManager(null, CookiePolicy.ACCEPT_ALL);
 		CookieHandler.setDefault(cookieManager);
 	}
 	
-	public static boolean doPing(URL url) {
+	public boolean doPing(URL url) {
 	    try {
 	    	doPost(url, null);
 	        
@@ -49,15 +52,21 @@ public class HttpUtil {
 	
 	
 	
-	public static NSObject doPost(URL url, List<NameValuePair> values) throws Exception {
+	public NSObject doPost(URL url, List<NameValuePair> values) throws Exception {
 		return doPost(url, values, true);
 	}
 	
-	public static NSObject doPost(URL url, List<NameValuePair> values, boolean expectingResponse) throws Exception {
+	public NSObject doPost(URL url, List<NameValuePair> values, boolean expectingResponse) throws Exception {
 		
 		HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
 		urlConnection.setDoOutput(true);
 		urlConnection.setRequestMethod("POST");
+
+		List<HttpCookie> cooks = cookieManager.getCookieStore().getCookies();
+		System.out.println("Found " + cooks.size() + " cookies");
+		for(HttpCookie cookie : cooks) {
+			System.out.println(cookie);
+		}
 		
         if(values != null) {
         	OutputStream os = urlConnection.getOutputStream();

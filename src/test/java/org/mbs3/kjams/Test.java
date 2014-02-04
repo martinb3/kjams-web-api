@@ -34,7 +34,7 @@ public class Test {
 		
 		Playlist tonight = null;
 		for(Playlist p : playlists) {
-			if(p.name.equals("Tonight") || p.name.equals("Rotation"))
+			if(p.name.equals("Tonight"))
 				tonight = p;
 		}
 		
