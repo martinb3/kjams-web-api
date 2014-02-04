@@ -10,7 +10,7 @@ public class Test {
 
 	public static void main(String[] args) throws Exception {
 		// no discovery yet, this will only work if you know the server URL
-		String url = "http://192.168.1.61/";
+		String url = "http://localhost:8080/";
 		Service svc = new Service(url);
 		
 		// list singers
@@ -34,7 +34,7 @@ public class Test {
 		
 		Playlist tonight = null;
 		for(Playlist p : playlists) {
-			if(p.name.equals("Tonight"))
+			if(p.name.equals("Tonight") || p.name.equals("Rotation"))
 				tonight = p;
 		}
 		
@@ -45,8 +45,6 @@ public class Test {
 		svc.removeFromPlayList(tonight, 1);
 		
 		// TODO: still need to implement pitch, reorder, and logout
-		
-		svc.close();
 	}
 
 }

@@ -4,99 +4,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
-import java.util.List;
 import java.util.Map;
-
-import org.apache.http.Consts;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.util.EntityUtils;
 
 import com.dd.plist.*;
 
 public class Util {
-	public static boolean doPing(CloseableHttpClient hc, URL url) {
-	    try {
-	    	doPost(hc, url, null);
-	        
-	        // don't even worry about it, kJams doesn't return
-	        return true;
-	        
-	        //return (200 <= responseCode && responseCode <= 399);
-	    } catch (Exception ex) {
-	        return true;
-	    }
-	}
-	
-	
-	
-	public static NSObject doPost(CloseableHttpClient hc, URL url, List<NameValuePair> values) throws Exception {
-		return doPost(hc, url, values, true);
-	}
-	
-	public static NSObject doPost(CloseableHttpClient hc, URL url, List<NameValuePair> values, boolean expectingResponse) throws Exception {
 		
-		HttpPost method = new HttpPost(url.toString());
-		
-        if(values != null)
-        	method.setEntity(new UrlEncodedFormEntity(values, Consts.UTF_8));
-		
-        String responseStream = null;
-        try {
-	        HttpResponse response = hc.execute(method);
-	        HttpEntity entity = response.getEntity();
-	        
-	        InputStream is = entity.getContent();
-	        responseStream = getStringFromInputStream(is);
-	        
-	        EntityUtils.consume(entity);
-	        
-	        
-			int retcode = response.getStatusLine().getStatusCode();
-			if(retcode != 200)
-				throw new IllegalAccessError("create returned " + retcode);
-        } 
-        catch (Exception ex) {
-        	if(expectingResponse)
-        		throw ex;
-        }
-        
-		NSObject o = null;
-		try {
-			if(responseStream != null && responseStream.contains("DOCTYPE plist")) {
-				o = PropertyListParser.parse(responseStream.getBytes());
-			}
-		}
-		catch (Exception ex) {
-			// don't care, doesn't always return
-			ex.printStackTrace();
-		}
-		
-		return o;
-	}
-
-	/*public static NSObject _getData(Session session, URL url) throws IOException, Exception {
-		String type = "application/x-www-form-urlencoded";
-		String encodedData= "";
-		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-		
-		conn.setDoOutput(true);
-		conn.setRequestMethod( "POST" );
-		conn.setRequestProperty( "Content-Type", type );
-		conn.setRequestProperty( "Content-Length", String.valueOf(encodedData.length()));
-		
-		OutputStream os = conn.getOutputStream();
-		os.write( encodedData.getBytes() );
-		
-		NSObject o = PropertyListParser.parse(conn.getInputStream());
-		return o;
-	}*/
-	
 	public static String dumpNSObject(Object obj) {
 		if(obj == null)
 			return null;

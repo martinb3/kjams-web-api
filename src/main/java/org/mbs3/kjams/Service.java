@@ -6,13 +6,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
-import org.apache.http.NameValuePair;
-import org.apache.http.client.config.CookieSpecs;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicNameValuePair;
 import org.mbs3.kjams.Constants;
+import org.mbs3.kjams.model.NameValuePair;
 import org.mbs3.kjams.model.Playlist;
 import org.mbs3.kjams.model.Singer;
 import org.mbs3.kjams.model.Song;
@@ -21,18 +16,10 @@ import com.dd.plist.*;
 
 public class Service {
 	
-	private final CloseableHttpClient httpClient;
+	
 	private final Map<String,URL> service_endpoints = new HashMap<String,URL>();
 	public Service(String url) throws IllegalArgumentException  {
 		super();
-		
-		RequestConfig globalConfig = RequestConfig.custom()
-		        .setCookieSpec(CookieSpecs.BROWSER_COMPATIBILITY)
-		        .build();
-		httpClient = HttpClients.custom()
-		        .setDefaultRequestConfig(globalConfig)
-		        .disableAutomaticRetries()
-		        .build();
 		
 		// strip trailing slashes 
 		while(url.endsWith("/")) {
@@ -49,7 +36,7 @@ public class Service {
 		}
 		
 		URL ep = service_endpoints.get(Constants.url_ping);
-		if(!Util.doPing(httpClient, ep)) {
+		if(!HttpUtil.doPing(ep)) {
 			throw new IllegalArgumentException("Invalid url " + ep.toString());	
 		}
 		
@@ -59,7 +46,7 @@ public class Service {
 		ArrayList<Singer> singers = new ArrayList<Singer>();
 		
 		URL singurl = service_endpoints.get(Constants.url_singers);
-		NSDictionary data = (NSDictionary)Util.doPost(httpClient, singurl, null);
+		NSDictionary data = (NSDictionary)HttpUtil.doPost(singurl, null);
 		NSArray playlists = (NSArray)data.get("Playlists");
 		for(NSObject i : playlists.getArray()) {
 			
@@ -112,14 +99,14 @@ public class Service {
 		URL newsingurl = service_endpoints.get(Constants.url_newsinger);
 		
         List<NameValuePair> data = Arrays.asList(new NameValuePair[]{
-        		new BasicNameValuePair("singername", singer),
-        		new BasicNameValuePair("password", password),
-        		new BasicNameValuePair("confirm", confirm),
-        		new BasicNameValuePair("submit", "Jam Out!")
+        		new NameValuePair("singername", singer),
+        		new NameValuePair("password", password),
+        		new NameValuePair("confirm", confirm),
+        		new NameValuePair("submit", "Jam Out!")
         		});
         
         
-		Util.doPost(httpClient, newsingurl, data);
+        HttpUtil.doPost(newsingurl, data);
 		
 		List<Singer> singers = getSingers();
 		for(Singer s : singers) {
@@ -134,8 +121,8 @@ public class Service {
 		ArrayList<Song> searchResults = new ArrayList<Song>();
 		
 		URL newsingurl = service_endpoints.get(Constants.url_search);
-		List<NameValuePair> data = Arrays.asList(new NameValuePair[]{new BasicNameValuePair("search", term)});
-        NSObject response = Util.doPost(httpClient, newsingurl, data);
+		List<NameValuePair> data = Arrays.asList(new NameValuePair[]{new NameValuePair("search", term)});
+        NSObject response = HttpUtil.doPost(newsingurl, data);
         
         NSDictionary dictPlaylists = (NSDictionary)response;
         NSArray arrPlaylists = (NSArray)dictPlaylists.get("Playlists");
@@ -146,10 +133,10 @@ public class Service {
         	NSArray playlistItems = (NSArray)dictPlaylist.get("Playlist Items");
         	for(NSObject dictItemObj : playlistItems.getArray()) {
         		NSDictionary dictItem = (NSDictionary)dictItemObj;
-        		
+        		//System.out.println("Foo: " + Util.dumpNSObject(dictItem));
         		Song song = new Song(
-        				((NSDate)dictItem.get("DAdd")).getDate(),
-        				((NSDate)dictItem.get("Date")).getDate(),
+        				dictItem.containsKey("DAdd") ? ((NSDate)dictItem.get("DAdd")).getDate() : null,
+        				dictItem.containsKey("Date") ? ((NSDate)dictItem.get("Date")).getDate() : null,
         				((NSString)dictItem.get("albm")).getContent(),
         				((NSString)dictItem.get("arts")).getContent(),
         				((NSString)dictItem.get("name")).getContent(),
@@ -168,23 +155,23 @@ public class Service {
 		URL dropurl = service_endpoints.get(Constants.url_drop);
         
         List<NameValuePair> data = Arrays.asList(new NameValuePair[]{
-        		new BasicNameValuePair("playlist", playlist.id+""),
-        		new BasicNameValuePair("song", song.soID+""),
+        		new NameValuePair("playlist", playlist.id+""),
+        		new NameValuePair("song", song.soID+""),
         		});
         
         
-		Util.doPost(httpClient, dropurl, data, false);
+        HttpUtil.doPost(dropurl, data, false);
 	}
 
 	public void removeFromPlayList(Playlist playlist, int position) throws Exception {
 		URL dropurl = service_endpoints.get(Constants.url_remove);
 		
         List<NameValuePair> data = Arrays.asList(new NameValuePair[]{
-        		new BasicNameValuePair("playlist", playlist.id+""),
-        		new BasicNameValuePair("piIx",  position+""),
+        		new NameValuePair("playlist", playlist.id+""),
+        		new NameValuePair("piIx",  position+""),
         		});
         
-		Util.doPost(httpClient, dropurl, data, false);
+        HttpUtil.doPost(dropurl, data, false);
 	}
 	
 	// TODO: reorderPlaylist
@@ -202,7 +189,7 @@ public class Service {
 		
 		URL newsingurl = service_endpoints.get(Constants.url_playlists);
         
-        NSObject response = Util.doPost(httpClient, newsingurl, null);
+        NSObject response = HttpUtil.doPost(newsingurl, null);
         
         NSDictionary dictPlaylists = (NSDictionary)response;
         NSArray arrPlaylists = (NSArray)dictPlaylists.get("Playlists");
@@ -240,19 +227,14 @@ public class Service {
 		URL newsingurl = service_endpoints.get(Constants.url_main);
        
         List<NameValuePair> data = Arrays.asList(new NameValuePair[]{
-        		new BasicNameValuePair("singer", sid+""),
-        		new BasicNameValuePair("password", password),
-        		new BasicNameValuePair("submit", "Login"),
+        		new NameValuePair("singer", sid+""),
+        		new NameValuePair("password", password),
+        		new NameValuePair("submit", "Login"),
         		});
         
 
         //System.out.println(Util.dumpCookies((InternalHttpClient) httpClient));
-		Util.doPost(httpClient, newsingurl, data);
+		HttpUtil.doPost(newsingurl, data);
 		//System.out.println(Util.dumpCookies((InternalHttpClient) httpClient));
 	}
-	
-	public void close() throws IOException {
-		httpClient.close();
-	}
-
 }
